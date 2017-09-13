@@ -19,10 +19,13 @@
       padding: 16px;
       border: 1px solid darkblue;
     }
+    .description {
+      max-width: 600px;
+    }
   </style>
 </head>
 <body>
-<div id="app" class="container">
+<div id="app" class="container-fluid">
   <nav class="navbar navbar-default">
     <div class="container-fluid">
       <div class="navbar-header">
@@ -73,7 +76,7 @@
           </td>
           <td :class="item.status ? 'text-muted completed' : ''"><strong><u v-html="item.title"></u></strong></td>
           <td>
-            <p v-html="item.description" :class="item.status ? 'text-muted completed' : ''"></p>
+            <p v-html="item.description" :class="item.status ? 'text-muted completed description' : 'description'"></p>
             <div v-show="index == 0 || show_all">
               <span class="btn btn-default" v-if="canTryIt(index)" @click="tryIt(index)">Try It!</span>
               <div v-show="item.running" v-html="tryItHtml(index)" class="try-it-html"></div>
@@ -96,15 +99,15 @@
 <script>
 let items = [
   {status: 0, title: 'Vue instance', description: 'The basis for a Vue instance is an HTML element and its selector.',
-  markup: `<div id='app'></div>`,
-  jscode: `
+    markup: `<div id='app'></div>`,
+    jscode: `
 let app = new Vue({
   el: '#app',
 });
 `},
   {status: 0, title: 'Data object', description: 'Part of the root Vue instance, this data is accessible within methods as properties of the <code>this</code> object.',
-  markup: `<div id='app'></div>`,
-  jscode: `
+    markup: `<div id='app'></div>`,
+    jscode: `
 let app = new Vue({
   el: '#app',
   data: {
@@ -131,8 +134,8 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'Computed Data', description: 'Object property on the Vue instance containing functions that return dynamic data. ',
-  markup: `<div id='app'>{{ fullname }}</div>`,
-  jscode: `
+    markup: `<div id='app'>{{ fullname }}</div>`,
+    jscode: `
 let app = new Vue({
   el: '#app',
   data: {
@@ -208,8 +211,8 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'Methods object', description: 'Part of the root Vue instance, these methods are accessible within other methods as properties of the <code>this</code> object.',
-  markup: ``,
-  jscode: `
+    markup: ``,
+    jscode: `
 let app = new Vue({
   el: '#app',
   data: {
@@ -268,7 +271,7 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'v-model', description: 'Two way binding data from the Vue instance to a field.',
-  markup: `
+    markup: `
 <div id='app'>
   <input type="text" v-model="name">
   <h3>{{ name }}</h3>
@@ -278,7 +281,7 @@ let app = new Vue({
   <div v-else>I have no idea who you are.</div>
 </div>
 `,
-  jscode: `
+    jscode: `
 let app = new Vue({
   el: '#app',
   data: {
@@ -287,7 +290,7 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'v-bind:', description: 'Dynamic attribute binding between data or methods. Shortcut: <code>:</code>, such as <code>:class=""</code>',
-  markup: `
+    markup: `
 <div id='app'>
   <p :class="my_classes.join(' ')">
     <img :src="gravatar_src"> The quick brown fox jumps over the lazy dog.
@@ -302,7 +305,7 @@ let app = new Vue({
   </p>
 </div>
   `,
-  jscode: `
+    jscode: `
 let app = new Vue({
   el: '#app',
   data: {
@@ -327,13 +330,52 @@ let app = new Vue({
   }
 });
 `},
+  {status: 0, title: 'Gotcha!', description: 'Arrays: You cannot set items directly <code>my_arr[1] = "blah";</code>.<br>Instead you must use Array methods <code>my_arr.push("blah")</code>, Vue global "set" & "delete" methods (<code>Vue.set(my_arr, 1, "blah")</code>), or replace the entire array (<code>my_arr = new_arr</code>).<br><br><code>Vue.set()</code> and <code>Vue.delete()</code> must also be used when dealing with properties that did not exist on an object when Vue last re-rendered the app or component.',
+    markup: `
+<div id='app'>
+  <input v-model="new_item_title" type="text">
+  <span @click="addItem" class="btn btn-default">Add</span>
+
+  <div v-for="(item, index) in items" :class="item.completed ? 'completed': ''">
+    <input @click="toggleItem(index)" type="checkbox"> - {{ item.title }} - <i @click="removeItem(index)" class="fa fa-trash"></i>
+  </div>
+</div>
+`,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    new_item_title: '',
+    items: []
+  },
+  methods: {
+    addItem: function() {
+      let newItem = {
+        completed: 0,
+        title: this.new_item_title,
+      };
+
+      this.items.push(newItem);
+      this.new_item_title = '';
+    },
+
+    toggleItem: function( index ) {
+      Vue.set(this.items[index], 'completed', !this.items[index].completed);
+    },
+
+    removeItem: function( index ) {
+      this.items.splice(index, 1);
+    }
+  }
+});
+` },
   {status: 0, title: 'Components', description: 'Components provide a way to break your functionality up into tiny reusable pieces.',
-  markup: `
+    markup: `
 <div id='app'>
   <my-component-explaining-components></my-component-explaining-components>
 </div>
 `,
-  jscode: `
+    jscode: `
 // defining my custom component
 const MyComponent = {
   template: \`
@@ -359,12 +401,12 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'Component Properties', description: 'You can pass values from the parent into a component using <code>v-bind:</code> and the property name and value. The component knows to expect the property by defining the <code>props</code> property on the component object.',
-  markup: `
+    markup: `
 <div id='app'>
   <my-component staticproperty="This is normal text!" :dynamicproperty="name"></my-component>
 </div>
 `,
-  jscode: `
+    jscode: `
 // defining my custom component
 const MyComponent2 = {
   props: ['staticproperty', 'dynamicproperty'],
@@ -389,7 +431,7 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'Vue Router', description: 'In many cases for a single page experience you will need to route users to different URLs to access different data. The Vue-Router extension is how you achieve that. The router matches path names to Vue components.',
-  markup: `
+    markup: `
 <div id='app'>
     <!-- These are links to components through the router --\>
     <router-link to="/">Home</router-link> |
@@ -400,7 +442,7 @@ let app = new Vue({
     <router-view></router-view>
 </div>
 `,
-  jscode: `
+    jscode: `
 const HomePage = {
   template: \`<div><h1>Welcome to my web zone!</h1></div>\`
 };
@@ -428,14 +470,14 @@ let app = new Vue({
 });
 `},
   {status: 0, title: 'Dynamic Routing', description: 'What if the route is unknown, or depends on an argument? Do not worry, Vue-Router got you.',
-  markup: `
+    markup: `
 <div id='app'>
     <router-link to="/">Home</router-link> |
     <router-link to="/blog">Blog</router-link>
     <router-view :posts="posts"></router-view>
 </div>
 `,
-  jscode: `
+    jscode: `
 const HomePage = {
   template: \`<div><h1>Welcome to my web zone!</h1></div>\`
 };
