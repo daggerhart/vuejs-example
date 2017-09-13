@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta title="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Vue.js Example</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/font-awesome.min.css" rel="stylesheet">
+  <link href="css/prism.css" rel="stylesheet">
+  <style>
+    .completed {
+      text-decoration: line-through;
+    }
+    .try-it-html {
+      margin: 12px;
+      padding: 16px;
+      border: 1px solid darkblue;
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="container">
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#"><i class="fa fa-file-code-o"></i> Vue.js Examples</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="row">
+    <!-- form to add a new item -->
+    <div class="col-sm-3">
+      <form>
+        <div class="form-group">
+          <label>Question</label>
+          <textarea class="form-control" v-model="question"></textarea>
+        </div>
+        <span class="btn btn-default" @click="addItem('top')">Add Top</span>
+        <span class="btn btn-default" @click="addItem">Add Bottom</span>
+      </form>
+
+      <div v-if="completed.length">
+        <h3>Completed</h3>
+        <ul class="list-group">
+          <li v-for="(item, index) in completed" class="completed list-group-item">
+            <i class="fa fa-check-square-o"
+               v-if="item.status"
+               @click="markItemIncomplete(index)"></i> {{ item.title }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- list of items -->
+    <div class="col-sm-9">
+      <label><input v-model="show_all" type="checkbox"> Show All</label>
+      <table class="table table-striped">
+        <thead>
+        <th></th>
+        <th>Title</th>
+        <th>Description</th>
+        </thead>
+        <tbody>
+        <tr v-for="(item, index) in items" :key="item.title">
+          <td>
+            <i class="fa fa-square-o"
+               v-if="!item.status"
+               @click="markItemComplete(index)"></i>
+          </td>
+          <td :class="item.status ? 'text-muted completed' : ''"><strong><u v-html="item.title"></u></strong></td>
+          <td>
+            <p v-html="item.description" :class="item.status ? 'text-muted completed' : ''"></p>
+            <div v-show="index == 0 || show_all">
+              <span class="btn btn-default" v-if="canTryIt(index)" @click="tryIt(index)">Try It!</span>
+              <div v-show="item.running" v-html="tryItHtml(index)" class="try-it-html"></div>
+              <pre v-if="item.markup" class="line-numbers"><code class="language-markup">{{ item.markup }}</code></pre>
+              <pre v-if="item.jscode" class="line-numbers"><code class="language-js">{{ item.jscode }}</code></pre>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/md5.min.js"></script>
+<script src="js/prism.js"></script>
+<script src="js/vue.js"></script>
+<script src="js/vue-router.js"></script>
+<script>
+let items = [
+  {status: 0, title: 'Vue instance', description: 'The basis for a Vue instance is an HTML element and its selector.',
+  markup: `<div id='app'></div>`,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+});
+`},
+  {status: 0, title: 'Data object', description: 'Part of the root Vue instance, this data is accessible within methods as properties of the <code>this</code> object.',
+  markup: `<div id='app'></div>`,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    first: 'Jonathan',
+    last: 'Daggerhart',
+    hobbies: ['programming','games'],
+    profile: {
+      email: '',
+      bio: '',
+    }
+  },
+});
+`},
+  {status: 0, title: 'Template output', description: 'Plain text output: <code>{{ variable }}</code> ',
+    markup: `<div id='app'>{{ first }} {{ last }} likes {{ hobbies.join(', ') }}</div>`,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    first: 'Jonathan',
+    last: 'Daggerhart',
+    hobbies: ['programming','games'],
+  },
+});
+`},
+  {status: 0, title: 'Computed Data', description: 'Object property on the Vue instance containing functions that return dynamic data. ',
+  markup: `<div id='app'>{{ fullname }}</div>`,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    first: 'Jonathan',
+    last: 'Daggerhart'
+  },
+  computed: {
+    fullname: function() {
+      return this.first + ' ' + this.last;
+    }
+  },
+});
+`},
+  {status: 0, title: 'v-html', description: 'Raw HTML output.',
+    markup: `
+<div id='app'>
+  <span v-html="fullname_html"></span>
+</div>`,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    first: 'Jonathan',
+    last: 'Daggerhart',
+  },
+  computed: {
+    fullname_html: function() {
+      return '<strong>' + this.first + '</strong> <u>' + this.last + '</u>';
+    }
+  },
+});
+`},
+  {status: 0, title: 'v-if<br>v-else-if<br>v-else', description: 'Conditional statements',
+    markup: `
+<div id='app'>
+  <div v-if="first">{{ first }}</div>
+  <div v-else>No first name found.</div>
+</div>
+  `,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    first: '',
+    last: 'Daggerhart',
+  },
+  computed: {
+    fullname: function() {
+      return this.first + ' ' + this.last;
+    }
+  },
+});
+`},
+  {status: 0, title: 'v-for', description: 'Loops, with and without indices.',
+    markup: `
+<div id='app'>
+  Without Indices
+  <ul v-if="items">
+    <li v-for="item in items">{{ item }}</li>
+  </ul>
+  With Indices
+  <ol v-if="items">
+    <li v-for="(item, index) in items">{{ index }} - {{ item }}</li>
+  </ol>
+</div>
+`,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    items: [ 'howdy', 'ho', 'good', 'neighbor' ],
+  },
+});
+`},
+  {status: 0, title: 'Methods object', description: 'Part of the root Vue instance, these methods are accessible within other methods as properties of the <code>this</code> object.',
+  markup: ``,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    items: [],
+  },
+  methods: {
+    // this method adds whatever value was passed into it to the array of items.
+    addItem: function( item ) {
+      this.items.push( item );
+    },
+    // remove a specific item from the array of items by index.
+    removeItem: function( index ) {
+      this.items.splice( index, 1 );
+    }
+  },
+});
+`},
+  {status: 0, title: 'v-on:', description: 'Event binding used like <code>v-on:eventName</code>. Shortcut <code>@</code>, such as <code>@click=""</code>',
+    markup: `
+<div id='app'>
+  <p>
+    <span v-on:click="removeFirstItem"
+          class="btn btn-default">
+          Remove First Item
+    </span>
+    <span v-on:click="addItem('basketball')"
+          class="btn btn-default">
+          Add "basketball" to items
+    </span>
+  </p>
+  <ul v-if="items">
+    <li v-for="(item, index) in items">
+      {{ index }} - {{ item }}
+      <i class="fa fa-trash" @click="removeItemByIndex(index)"></i>
+    </li>
+  </ul>
+</div>
+`,
+    jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    items: [ 'something', 'another', 'a third thing' ],
+  },
+  methods: {
+    addItem: function( item ) {
+      this.items.push( item );
+    },
+    removeFirstItem: function() {
+      this.items.splice( 0, 1 );
+    },
+    removeItemByIndex: function( index ) {
+      this.items.splice( index, 1 );
+    }
+  },
+});
+`},
+  {status: 0, title: 'v-model', description: 'Two way binding data from the Vue instance to a field.',
+  markup: `
+<div id='app'>
+  <input type="text" v-model="name">
+  <h3>{{ name }}</h3>
+
+  <div v-if="name == 'default name'">This is the default name.</div>
+  <div v-else-if="name.toLowerCase() == 'jonathan'">Hey {{ name }}!!</div>
+  <div v-else>I have no idea who you are.</div>
+</div>
+`,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    name: 'default name',
+  }
+});
+`},
+  {status: 0, title: 'v-bind:', description: 'Dynamic attribute binding between data or methods. Shortcut: <code>:</code>, such as <code>:class=""</code>',
+  markup: `
+<div id='app'>
+  <p :class="my_classes.join(' ')">
+    <img :src="gravatar_src"> The quick brown fox jumps over the lazy dog.
+  </p>
+
+  <p>
+    <span @click="toggleClass('alert-success')" class="btn btn-default">Success</span>
+    <span @click="toggleClass('lead')" class="btn btn-default">Big</span>
+    <span @click="toggleClass('completed')" class="btn btn-default">String</span>
+    <span @click="toggleClass('text-right')" class="btn btn-default">Right</span>
+    <span @click="toggleClass('text-uppercase')" class="btn btn-default">Uppercase</span>
+  </p>
+</div>
+  `,
+  jscode: `
+let app = new Vue({
+  el: '#app',
+  data: {
+    my_classes: [ 'alert' ],
+    email: 'jonathan@daggerhart.com',
+  },
+  computed: {
+    gravatar_src: function() {
+      return "https://www.gravatar.com/avatar/" + md5(this.email);
+    }
+  },
+  methods: {
+    toggleClass: function( name ) {
+      let index = this.my_classes.findIndex((item) => item == name);
+      if ( index >= 0 ) {
+        this.my_classes.splice(index, 1);
+      }
+      else {
+        this.my_classes.push(name);
+      }
+    }
+  }
+});
+`},
+  {status: 0, title: 'Components', description: 'Components provide a way to break your functionality up into tiny reusable pieces.',
+  markup: `
+<div id='app'>
+  <my-component-explaining-components></my-component-explaining-components>
+</div>
+`,
+  jscode: `
+// defining my custom component
+const MyComponent = {
+  template: \`
+<div>
+  <p>This component becomes available to the Vue instance by supplying it as the value for a property on the "components" property of the Vue instance.</p>
+  <p>Note how the component name is different from the object name. It is the component name that is used as a tag within the HTML.</p>
+  <p><u><strong>Important: </strong> A component must have only 1 root-level element.</u></p>
+  <p>{{ data_explanation }}</p>
+</div>\`,
+  data: function() {
+    return {
+      data_explanation: 'Also note how the data property on a component is now a function that returns an object of values.',
+    }
+  }
+};
+
+// the Vue app
+let app = new Vue({
+  el: '#app',
+  components: {
+    'my-component-explaining-components': MyComponent
+  }
+});
+`},
+  {status: 0, title: 'Component Properties', description: 'You can pass values from the parent into a component using <code>v-bind:</code> and the property name and value. The component knows to expect the property by defining the <code>props</code> property on the component object.',
+  markup: `
+<div id='app'>
+  <my-component staticproperty="This is normal text!" :dynamicproperty="name"></my-component>
+</div>
+`,
+  jscode: `
+// defining my custom component
+const MyComponent2 = {
+  props: ['staticproperty', 'dynamicproperty'],
+
+  template: \`
+<div>
+  <p>The follow data came from the parent, passed in as a property:</p>
+  <p>Static Data: <strong>{{ staticproperty }}</strong></p>
+  <p>Dynamic Data: <strong>{{ dynamicproperty }}</strong></p>
+</div>\`
+};
+
+// the Vue app
+let app = new Vue({
+  el: '#app',
+  components: {
+    'my-component': MyComponent2
+  },
+  data: {
+    name: 'Jonathan Daggerhart'
+  }
+});
+`},
+  {status: 0, title: 'Vue Router', description: 'In many cases for a single page experience you will need to route users to different URLs to access different data. The Vue-Router extension is how you achieve that. The router matches path names to Vue components.',
+  markup: `
+<div id='app'>
+    <!-- These are links to components through the router --\>
+    <router-link to="/">Home</router-link> |
+    <router-link to="/blog">Blog</router-link> |
+    <router-link to="/profile">Profile</router-link>
+
+    <!-- This is where the component is output --\>
+    <router-view></router-view>
+</div>
+`,
+  jscode: `
+const HomePage = {
+  template: \`<div><h1>Welcome to my web zone!</h1></div>\`
+};
+const Blog = {
+  template: \`<div><h2>My Blog</h2><ul><li>Blog Post 1</li><li>Blog Post 2</li></ul></div>\`
+};
+const Profile = {
+  template: \`<div><h2>Jonathan</h2><p>Not a bad dude.</p></div>\`
+};
+
+const router = new VueRouter({
+  routes: [
+    { path: '/', component: HomePage },
+    { path: '/blog', component: Blog },
+    { path: '/profile', component: Profile }
+  ]
+});
+
+// tell Vue to use the VueRouter
+Vue.use(VueRouter);
+
+let app = new Vue({
+  el: '#app',
+  router: router
+});
+`},
+  {status: 0, title: 'Dynamic Routing', description: 'What if the route is unknown, or depends on an argument? Do not worry, Vue-Router got you.',
+  markup: `
+<div id='app'>
+    <router-link to="/">Home</router-link> |
+    <router-link to="/blog">Blog</router-link>
+    <router-view :posts="posts"></router-view>
+</div>
+`,
+  jscode: `
+const HomePage = {
+  template: \`<div><h1>Welcome to my web zone!</h1></div>\`
+};
+
+const Blog = {
+  props: ['posts'],
+  template: \`
+<div>
+  <h2>My Blog</h2>
+  <ul>
+    <li v-for="post in posts">
+      <router-link :to="{ name: 'post', params: { id: post.id, post: post } }">{{ post.title }}</router-link>
+    </li>
+  </ul>
+</div>\`
+};
+
+const Post = {
+  props: ['post'],
+  template: \`
+<div :id="'post-' + post.id">
+  <h1>{{ post.title }}</h1>
+  <p>{{ post.body }}</p>
+  <p><a @click="$router.go(-1)"><i class="fa fa-long-arrow-left"></i> Go Back</a></p>
+</div>\`
+};
+
+const router = new VueRouter({
+  routes: [
+    { path: '/', component: HomePage },
+    { path: '/blog', component: Blog },
+
+    {
+      component: Post,
+      path: '/post/:id', // dynamic route matching uses parameters prefixed with a colon
+      name: 'post',      // a "named" route
+      props: true,       // this route will convert "params" into "props"
+    }
+  ]
+});
+
+Vue.use(VueRouter);
+
+let app = new Vue({
+  el: '#app',
+  router: router,
+  data: {
+    posts: [
+      { id: 1, title: 'My First Blog Post', body: 'This not my best post, but it is my first.' },
+      { id: 2, title: 'Second Post!!!', body: 'I am getting better at this blog post thing.' },
+      { id: 218, title: 'Another Classic Blog Post', body: 'Now it\s really getting good!' },
+    ],
+  }
+});
+
+`},
+  {status: 0, title: 'The End', description: 'Have any questions or something you want to show?', markup: '', jscode: '' }
+];
+
+  let app = new Vue({
+    el: '#app',
+    data: {
+      show_all: false,
+      items: items,
+      completed: [],
+      question: '',
+    },
+    watch: {
+      items: function() {
+        setTimeout(function(){
+          Prism.highlightAll();
+        }, 1);
+      }
+    },
+    methods: {
+      addItem: function ( where ) {
+        let item = {
+          status: 0,
+          title: '? Question',
+          description: this.question,
+          markup: '',
+          jscode: '',
+        };
+
+        if ( where === 'top' ){
+          this.items.unshift(item);
+        }
+        else {
+          this.items.push(item);
+        }
+
+        this.question = '';
+      },
+
+      removeItem: function( index ) {
+        this.items.splice(index, 1);
+      },
+
+      markItemComplete: function( index ) {
+        //this.items[index.status] = 1;
+        Vue.set(this.items[index], 'status', 1);
+        Vue.set(this.items[index], 'running', 0);
+        let items = this.items.splice(index, 1);
+        this.completed.push(items[0]);
+      },
+
+      markItemIncomplete: function( index ) {
+        Vue.set(this.completed[index], 'status', 0);
+        let items = this.completed.splice(index, 1);
+        this.items.unshift(items[0]);
+      },
+
+      canTryIt: function( index ) {
+        let html = this.items[index].markup.replace("<div id='app'></div>", '').trim().replace(' ', '');
+        return (html != '');
+      },
+
+      tryItHtml: function( index ) {
+        return this.items[index].markup.replace(/'app'/g, `'app_${index}'`);
+      },
+
+      tryIt: function ( index ) {
+        Vue.set( this.items[index], 'running', 1);
+        let item = this.items[index];
+        let jscode = item.jscode.replace(/let app =/g, `let app_${index} =`).replace(/el: '#app'/g, `el: '#app_${index}'`)
+        eval(jscode);
+      }
+    },
+  })
+</script>
+
+</body>
+</html>
