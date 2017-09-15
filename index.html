@@ -152,7 +152,8 @@ let app = new Vue({
   {status: 0, title: 'v-html', description: 'Raw HTML output.',
     markup: `
 <div id='app'>
-  <span v-html="fullname_html"></span>
+  <div>HTML in template tags don't work: {{ fullname_html }}</div>
+  <div v-html="fullname_html"></div>
 </div>`,
     jscode: `
 let app = new Vue({
@@ -372,6 +373,7 @@ let app = new Vue({
   {status: 0, title: 'Components', description: 'Components provide a way to break your functionality up into tiny reusable pieces.',
     markup: `
 <div id='app'>
+  Everything after this text is the component.
   <my-component-explaining-components></my-component-explaining-components>
 </div>
 `,
@@ -403,19 +405,19 @@ let app = new Vue({
   {status: 0, title: 'Component Properties', description: 'You can pass values from the parent into a component using <code>v-bind:</code> and the property name and value. The component knows to expect the property by defining the <code>props</code> property on the component object.',
     markup: `
 <div id='app'>
-  <my-component staticproperty="This is normal text!" :dynamicproperty="name"></my-component>
+  <my-component static-property="This is normal text!" :dynamic-property="name"></my-component>
 </div>
 `,
     jscode: `
 // defining my custom component
 const MyComponent2 = {
-  props: ['staticproperty', 'dynamicproperty'],
+  props: ['staticProperty', 'dynamicProperty'],
 
   template: \`
 <div>
   <p>The follow data came from the parent, passed in as a property:</p>
-  <p>Static Data: <strong>{{ staticproperty }}</strong></p>
-  <p>Dynamic Data: <strong>{{ dynamicproperty }}</strong></p>
+  <p>Static Data: <strong>{{ staticProperty }}</strong></p>
+  <p>Dynamic Data: <strong>{{ dynamicProperty }}</strong></p>
 </div>\`
 };
 
@@ -474,7 +476,7 @@ let app = new Vue({
 <div id='app'>
     <router-link to="/">Home</router-link> |
     <router-link to="/blog">Blog</router-link>
-    <router-view :posts="posts"></router-view>
+    <router-view :list_of_items="blog_posts"></router-view>
 </div>
 `,
     jscode: `
@@ -483,13 +485,13 @@ const HomePage = {
 };
 
 const Blog = {
-  props: ['posts'],
+  props: ['list_of_items'],
   template: \`
 <div>
   <h2>My Blog</h2>
   <ul>
-    <li v-for="post in posts">
-      <router-link :to="{ name: 'post', params: { id: post.id, post: post } }">{{ post.title }}</router-link>
+    <li v-for="item in list_of_items">
+      <router-link :to="{ name: 'post-route', params: { id: item.id, post: item } }">{{ item.title }}</router-link>
     </li>
   </ul>
 </div>\`
@@ -513,7 +515,7 @@ const router = new VueRouter({
     {
       component: Post,
       path: '/post/:id', // dynamic route matching uses parameters prefixed with a colon
-      name: 'post',      // a "named" route
+      name: 'post-route',// a "named" route
       props: true,       // this route will convert "params" into "props"
     }
   ]
@@ -525,7 +527,7 @@ let app = new Vue({
   el: '#app',
   router: router,
   data: {
-    posts: [
+    blog_posts: [
       { id: 1, title: 'My First Blog Post', body: 'This not my best post, but it is my first.' },
       { id: 2, title: 'Second Post!!!', body: 'I am getting better at this blog post thing.' },
       { id: 218, title: 'Another Classic Blog Post', body: 'Now it\s really getting good!' },
